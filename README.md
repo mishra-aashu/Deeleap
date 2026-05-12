@@ -1,8 +1,15 @@
 # Deeleap
 
+![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
+![Platform](https://img.shields.io/badge/platform-Android-blue)
+![Language](https://img.shields.io/badge/language-Kotlin%20%7C%20C%2B%2B-orange)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 Deeleap is a high-performance, professional-grade video editing application for Android. Built with a focus on speed and precision, it leverages a hybrid processing engine combining hardware acceleration with advanced C++ rendering logic.
 
-## 🚀 Key Features
+---
+
+## Key Features
 
 - **High-Performance Rendering Engine**: Custom C++/OpenGL ES pipeline for frame-accurate, real-time previews and high-speed exports.
 - **Advanced Keyframe Animation**: Full control over layer properties including Position, Scale, Rotation, and Opacity with professional interpolation.
@@ -11,43 +18,60 @@ Deeleap is a high-performance, professional-grade video editing application for 
 - **Pro Timeline**: Intuitive multi-layer timeline management with precise trimming and splitting capabilities.
 - **Custom Media Gallery**: A built-in, permission-aware gallery picker with lifecycle-integrated media previews.
 
-## 🛠 Tech Stack
+## Tech Stack
 
-- **Language**: Kotlin, C++ (JNI)
+- **Core**: Kotlin, C++ (JNI)
 - **UI Framework**: Jetpack Compose
 - **Video Processing**: Media3, FFmpeg-kit, MediaCodec
 - **Graphics**: OpenGL ES 3.0+
 - **Architecture**: Clean Architecture + MVVM + MVI
-- **Dependency Injection**: Hilt (planned/implemented)
-- **Concurrency**: Kotlin Coroutines & Flow
 
-## 🏗 Project Structure
+## Assembly & Build Instructions
+
+To build and assemble the project from the command line, follow these steps:
+
+### Prerequisites
+- **Android SDK**: API Level 34+
+- **NDK**: Version 25.1.8937393 (or compatible)
+- **CMake**: Version 3.22.1+
+
+### Assemble Debug Build
+Generate a debug APK for testing:
+```bash
+./gradlew assembleDebug
+```
+
+### Assemble Release Build
+Generate a production-ready signed APK:
+```bash
+./gradlew assembleRelease
+```
+
+### Native Code Assembly
+The C++ components are automatically assembled via CMake. To trigger a clean native build:
+```bash
+./gradlew cleanExternalNativeBuild
+./gradlew assembleDebug
+```
+
+### Build Artifacts
+Once assembled, the APKs can be found in:
+- `app/build/outputs/apk/debug/app-debug.apk`
+- `app/build/outputs/apk/release/app-release.apk`
+
+---
+
+## Project Structure
 
 - `app/src/main/java`: Kotlin source code (UI, ViewModels, Business Logic).
 - `app/src/main/cpp`: Native C++ code for high-performance GPU rendering and compositing.
 - `app/src/main/res`: Android resources and UI assets.
 
-## 🚀 Getting Started
-
-### Prerequisites
-- Android Studio Ladybug or newer
-- Android SDK 34+
-- NDK (Side-by-side) configured
-
-### Build Instructions
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/mishra-aashu/Deeleap.git
-   ```
-2. Open the project in Android Studio.
-3. Sync Gradle and build the project.
-4. Run on a physical device (recommended for GPU features).
-
-## 🤝 Contributing
+## Contributing
 Contributions are welcome! Please feel free to submit a Pull Request or open an issue for any bugs or feature requests.
 
-## 📄 License
+## License
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
-Developed with ❤️ by [Aashu Mishra](https://github.com/mishra-aashu)
+Developed by [Aashu Mishra](https://github.com/mishra-aashu)
