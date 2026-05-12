@@ -38,9 +38,8 @@ class LosslessTrimmer(private val context: Context) {
             var muxer: MediaMuxer? = null
 
             try {
-                context.contentResolver.openFileDescriptor(inputUri, "r")?.use { fd ->
-                    extractor.setDataSource(fd.fileDescriptor)
-                } ?: throw Exception("Could not open input file")
+                // Use context-aware setDataSource for better compatibility with content URIs
+                extractor.setDataSource(context, inputUri, null)
 
                 muxer = MediaMuxer(outputFilePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
 
