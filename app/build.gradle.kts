@@ -69,6 +69,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
+    implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.compose.material:material-icons-extended")
     
     // Navigation
@@ -88,6 +89,7 @@ dependencies {
     implementation("androidx.media3:media3-common:1.2.1")
     implementation("androidx.media3:media3-exoplayer:1.2.1")
     implementation("androidx.media3:media3-ui:1.2.1")
+    implementation("androidx.media3:media3-effect:1.2.1")
 
     // FFmpeg-kit wrapper (temporarily disabled due to repository issues)
     // implementation("com.arthenica:ffmpeg-kit-full:6.0")

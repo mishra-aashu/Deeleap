@@ -5,6 +5,7 @@ import androidx.media3.common.VideoFrameProcessingException
 import androidx.media3.effect.BaseGlShaderProgram
 import androidx.media3.effect.GlEffect
 import androidx.media3.effect.GlShaderProgram
+import androidx.media3.common.util.Size
 
 /**
  * A Media3 GlEffect that adjusts brightness and contrast.
@@ -54,6 +55,10 @@ private class BrightnessContrastShaderProgram(
         // Implementation of shader compilation and uniform binding would go here
         // For brevity in this task, we'll assume a standard shader helper is used
         // In a real app, you'd use GlUtil to compile and link.
+    }
+    
+    override fun configure(inputWidth: Int, inputHeight: Int): Size {
+        return Size(inputWidth, inputHeight)
     }
 
     override fun drawFrame(inputTexId: Int, presentationTimeUs: Long) {

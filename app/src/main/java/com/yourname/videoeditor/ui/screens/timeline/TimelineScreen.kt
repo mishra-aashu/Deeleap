@@ -22,6 +22,7 @@ import com.yourname.videoeditor.VideoEditorApp
 import com.yourname.videoeditor.ui.screens.timeline.components.MultiTrackTimeline
 import com.yourname.videoeditor.ui.screens.timeline.components.TransformControls
 import androidx.compose.animation.animateContentSize
+import com.yourname.videoeditor.domain.model.*
 
 
 
@@ -224,13 +225,71 @@ fun TimelineScreen(
                 // Properties Panel (Floating or Bottom depending on selection)
                 viewModel.selectedLayer?.let { (trackId, layer) ->
                     TransformControls(
-                        transform = layer.transform,
-                        onTransformChange = { newTransform ->
+                        opacity = layer.opacity.getValueAt(viewModel.currentPositionMs),
+                        posX = layer.transform.positionX,
+                        posY = layer.transform.positionY,
+                        scale = layer.transform.scaleX,
+                        rotation = layer.transform.rotation,
+                        onValueChange = { property, value ->
+                            val currentTransform = layer.transform
                             val updatedLayer = when (layer) {
-                                is VideoLayer -> layer.copy(transform = newTransform)
-                                is AudioLayer -> layer.copy(transform = newTransform)
-                                is ImageLayer -> layer.copy(transform = newTransform)
-                                is TextLayer -> layer.copy(transform = newTransform)
+                                is VideoLayer -> {
+                                    if (property == "opacity") layer.copy(opacity = layer.opacity.copy(defaultValue = value))
+                                    else layer.copy(transform = when(property) {
+                                        "posX" -> currentTransform.copy(positionX = value)
+                                        "posY" -> currentTransform.copy(positionY = value)
+                                        "scale" -> currentTransform.copy(scaleX = value, scaleY = value)
+                                        "rotation" -> currentTransform.copy(rotation = value)
+                                        else -> currentTransform
+                                    })
+                                }
+                                is ImageLayer -> {
+                                    if (property == "opacity") layer.copy(opacity = layer.opacity.copy(defaultValue = value))
+                                    else layer.copy(transform = when(property) {
+                                        "posX" -> currentTransform.copy(positionX = value)
+                                        "posY" -> currentTransform.copy(positionY = value)
+                                        "scale" -> currentTransform.copy(scaleX = value, scaleY = value)
+                                        "rotation" -> currentTransform.copy(rotation = value)
+                                        else -> currentTransform
+                                    })
+                                }
+                                is TextLayer -> {
+                                    if (property == "opacity") layer.copy(opacity = layer.opacity.copy(defaultValue = value))
+                                    else layer.copy(transform = when(property) {
+                                        "posX" -> currentTransform.copy(positionX = value)
+                                        "posY" -> currentTransform.copy(positionY = value)
+                                        "scale" -> currentTransform.copy(scaleX = value, scaleY = value)
+                                        "rotation" -> currentTransform.copy(rotation = value)
+                                        else -> currentTransform
+                                    })
+                                }
+                                is AudioLayer -> layer
+                            }
+                            viewModel.updateLayer(trackId, updatedLayer)
+                        },
+                        onAddKeyframe = { property ->
+                            // Map property names to match ViewModel's addKeyframe
+                            val vmProperty = when(property) {
+                                "scale" -> "scaleX" // Simplified
+                                else -> property
+                            }
+                            // We need a current value to add as keyframe
+                            val value = when(property) {
+                                "opacity" -> layer.opacity.getValueAt(viewModel.currentPositionMs)
+                                "posX" -> layer.transform.positionX
+                                "posY" -> layer.transform.positionY
+                                "scale" -> layer.transform.scaleX
+                                "rotation" -> layer.transform.rotation
+                                else -> 0f
+                            }
+                            viewModel.addKeyframe(trackId, layer.id, vmProperty, value)
+                        },
+                        onReset = {
+                            val updatedLayer = when (layer) {
+                                is VideoLayer -> layer.copy(transform = Transform())
+                                is ImageLayer -> layer.copy(transform = Transform())
+                                is TextLayer -> layer.copy(transform = Transform())
+                                is AudioLayer -> layer
                             }
                             viewModel.updateLayer(trackId, updatedLayer)
                         },

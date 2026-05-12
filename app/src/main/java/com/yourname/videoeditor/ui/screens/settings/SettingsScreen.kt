@@ -72,7 +72,7 @@ fun SettingsScreen(
                                 role = Role.RadioButton
                             )
                             .padding(horizontal = 16.dp),
-                        verticalAlignment = Alignment.CenterHorizontally
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
                             selected = (mode == themeMode),

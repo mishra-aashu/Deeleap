@@ -3,6 +3,8 @@ package com.yourname.videoeditor.domain.model
 import android.graphics.RectF
 import android.net.Uri
 import androidx.compose.ui.graphics.Color
+import com.yourname.videoeditor.domain.animation.AnimatableProperty
+import com.yourname.videoeditor.domain.animation.AnimatableTransform
 import java.util.UUID
 
 /**
@@ -20,9 +22,6 @@ data class Transform(
 )
 
 
-import com.yourname.videoeditor.domain.animation.AnimatableProperty
-import com.yourname.videoeditor.domain.animation.AnimatableTransform
-
 /**
  * Base sealed class for all timeline layers.
  */
@@ -38,6 +37,9 @@ sealed class Layer {
     // Animation Properties
     abstract val opacity: AnimatableProperty
     abstract val animTransform: AnimatableTransform
+    
+    // Static Transform (Current state)
+    abstract val transform: Transform
 
     val durationMs: Long get() = endMs - startMs
 }
@@ -55,6 +57,7 @@ data class VideoLayer(
     override val isMuted: Boolean = false,
     override val opacity: AnimatableProperty = AnimatableProperty(defaultValue = 1f),
     override val animTransform: AnimatableTransform = AnimatableTransform(),
+    override val transform: Transform = Transform(),
     val trimInMs: Long = 0,
     val trimOutMs: Long = 0
 ) : Layer()
@@ -71,7 +74,8 @@ data class ImageLayer(
     override val volume: Float = 1f,
     override val isMuted: Boolean = false,
     override val opacity: AnimatableProperty = AnimatableProperty(defaultValue = 1f),
-    override val animTransform: AnimatableTransform = AnimatableTransform()
+    override val animTransform: AnimatableTransform = AnimatableTransform(),
+    override val transform: Transform = Transform()
 ) : Layer()
 
 /**
@@ -86,7 +90,8 @@ data class AudioLayer(
     override val volume: Float = 1f,
     override val isMuted: Boolean = false,
     override val opacity: AnimatableProperty = AnimatableProperty(defaultValue = 0f), // Audio has no visual opacity
-    override val animTransform: AnimatableTransform = AnimatableTransform()
+    override val animTransform: AnimatableTransform = AnimatableTransform(),
+    override val transform: Transform = Transform()
 ) : Layer()
 
 /**
@@ -102,6 +107,7 @@ data class TextLayer(
     override val isMuted: Boolean = false,
     override val opacity: AnimatableProperty = AnimatableProperty(defaultValue = 1f),
     override val animTransform: AnimatableTransform = AnimatableTransform(),
+    override val transform: Transform = Transform(),
     val text: String = "Double tap to edit",
     val fontSize: Int = 24,
     val color: Color = Color.White,

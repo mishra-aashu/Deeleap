@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 import com.yourname.videoeditor.domain.history.*
+import com.yourname.videoeditor.domain.animation.Keyframe
 
 class TimelineViewModel(
     private val videoEditRepository: VideoEditRepository,
@@ -37,12 +38,12 @@ class TimelineViewModel(
         val updatedLayer = when (layer) {
             is VideoLayer -> {
                 when (propertyName) {
-                    "opacity" -> layer.copy(opacity = layer.opacity.copy(keyframes = (layer.opacity.keyframes + newKeyframe).sortedBy { it.timeMs }))
-                    "posX" -> layer.copy(animTransform = layer.animTransform.copy(positionX = layer.animTransform.positionX.copy(keyframes = (layer.animTransform.positionX.keyframes + newKeyframe).sortedBy { it.timeMs })))
-                    "posY" -> layer.copy(animTransform = layer.animTransform.copy(positionY = layer.animTransform.positionY.copy(keyframes = (layer.animTransform.positionY.keyframes + newKeyframe).sortedBy { it.timeMs })))
-                    "scaleX" -> layer.copy(animTransform = layer.animTransform.copy(scaleX = layer.animTransform.scaleX.copy(keyframes = (layer.animTransform.scaleX.keyframes + newKeyframe).sortedBy { it.timeMs })))
-                    "scaleY" -> layer.copy(animTransform = layer.animTransform.copy(scaleY = layer.animTransform.scaleY.copy(keyframes = (layer.animTransform.scaleY.keyframes + newKeyframe).sortedBy { it.timeMs })))
-                    "rotation" -> layer.copy(animTransform = layer.animTransform.copy(rotation = layer.animTransform.rotation.copy(keyframes = (layer.animTransform.rotation.keyframes + newKeyframe).sortedBy { it.timeMs })))
+                    "opacity" -> layer.copy(opacity = layer.opacity.copy(keyframes = (layer.opacity.keyframes + newKeyframe).sortedBy { k -> k.timeMs }))
+                    "posX" -> layer.copy(animTransform = layer.animTransform.copy(positionX = layer.animTransform.positionX.copy(keyframes = (layer.animTransform.positionX.keyframes + newKeyframe).sortedBy { k -> k.timeMs })))
+                    "posY" -> layer.copy(animTransform = layer.animTransform.copy(positionY = layer.animTransform.positionY.copy(keyframes = (layer.animTransform.positionY.keyframes + newKeyframe).sortedBy { k -> k.timeMs })))
+                    "scaleX" -> layer.copy(animTransform = layer.animTransform.copy(scaleX = layer.animTransform.scaleX.copy(keyframes = (layer.animTransform.scaleX.keyframes + newKeyframe).sortedBy { k -> k.timeMs })))
+                    "scaleY" -> layer.copy(animTransform = layer.animTransform.copy(scaleY = layer.animTransform.scaleY.copy(keyframes = (layer.animTransform.scaleY.keyframes + newKeyframe).sortedBy { k -> k.timeMs })))
+                    "rotation" -> layer.copy(animTransform = layer.animTransform.copy(rotation = layer.animTransform.rotation.copy(keyframes = (layer.animTransform.rotation.keyframes + newKeyframe).sortedBy { k -> k.timeMs })))
                     else -> layer
                 }
             }

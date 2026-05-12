@@ -93,7 +93,7 @@ fun EmptyProjectPlaceholder(modifier: Modifier = Modifier) {
             imageVector = Icons.Default.VideoLibrary,
             contentDescription = null,
             modifier = Modifier.size(100.dp),
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(

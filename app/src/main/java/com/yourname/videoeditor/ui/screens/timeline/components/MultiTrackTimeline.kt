@@ -3,6 +3,7 @@ package com.yourname.videoeditor.ui.screens.timeline.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState

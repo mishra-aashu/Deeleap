@@ -121,7 +121,7 @@ fun AudioPreviewSheet(
             }
             Spacer(modifier = Modifier.height(16.dp))
             Row(
-                verticalAlignment = Alignment.CenterHorizontally,
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 IconButton(onClick = {

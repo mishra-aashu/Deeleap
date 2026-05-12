@@ -22,6 +22,7 @@ import com.yourname.videoeditor.domain.model.ImageItem
 import com.yourname.videoeditor.domain.model.MediaItem
 import com.yourname.videoeditor.domain.model.VideoItem
 import com.yourname.videoeditor.ui.screens.gallery.components.*
+import com.yourname.videoeditor.util.PermissionHelper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
