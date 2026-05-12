@@ -31,7 +31,7 @@ fun TimelineRuler(
     Canvas(
         modifier = modifier
             .fillMaxWidth()
-            .height(30.dp)
+            .height(40.dp)
     ) {
         val width = size.width
         val stepMs = when {

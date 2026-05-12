@@ -136,6 +136,17 @@ class TimelineViewModel(
     var outputVideoFile by mutableStateOf<File?>(null)
         private set
 
+    var activeTool by mutableStateOf<String?>(null)
+        private set
+
+    fun setActiveTool(tool: String?) {
+        activeTool = tool
+    }
+
+    fun updatePosition(positionMs: Long) {
+        currentPositionMs = positionMs
+    }
+
     fun onVideoSelected(uri: Uri) {
         selectedVideoUri = uri
         val trackId = timelineConfig.tracks.firstOrNull()?.id ?: return

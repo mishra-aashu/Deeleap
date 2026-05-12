@@ -2,16 +2,11 @@ package com.yourname.videoeditor.ui.screens.timeline
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.automirrored.filled.CallSplit
+import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -58,7 +53,27 @@ fun TimelineScreen(
     }
 
     LaunchedEffect(initialUri) {
-        initialUri?.let { viewModel.onVideoSelected(it) }
+        initialUri?.let { uri ->
+            viewModel.onVideoSelected(uri)
+            val mediaItem = MediaItem.fromUri(uri)
+            exoPlayer.setMediaItem(mediaItem)
+            exoPlayer.prepare()
+        }
+    }
+
+    // Sync Player with Timeline Position
+    LaunchedEffect(viewModel.currentPositionMs) {
+        if (!exoPlayer.isPlaying) {
+            exoPlayer.seekTo(viewModel.currentPositionMs)
+        }
+    }
+
+    // Update Timeline Position while playing
+    LaunchedEffect(exoPlayer.isPlaying) {
+        while (exoPlayer.isPlaying) {
+            viewModel.updatePosition(exoPlayer.currentPosition)
+            delay(33) // ~30fps update
+        }
     }
 
     val exoPlayer = remember {
@@ -118,52 +133,26 @@ fun TimelineScreen(
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            // Preview Player with Direct Manipulation
+            // 1. Preview Player (Larger Weight)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(0.4f)
+                    .weight(0.55f) // Increased preview size
                     .background(Color.Black)
                     .pointerInput(Unit) {
                         detectTransformGestures { _, pan, zoom, rotation ->
                             viewModel.selectedLayer?.let { (trackId, layer) ->
                                 val currentTransform = layer.transform
-                                
-                                // Normalize pan based on viewport size (approximate)
                                 val newPosX = currentTransform.positionX + (pan.x / size.width) * 2f
                                 val newPosY = currentTransform.positionY + (pan.y / size.height) * 2f
                                 val newScale = (currentTransform.scaleX * zoom).coerceIn(0.1f, 10f)
                                 val newRotation = (currentTransform.rotation + rotation) % 360f
 
                                 val updatedLayer = when (layer) {
-                                    is VideoLayer -> layer.copy(
-                                        transform = currentTransform.copy(
-                                            positionX = newPosX,
-                                            positionY = newPosY,
-                                            scaleX = newScale,
-                                            scaleY = newScale,
-                                            rotation = newRotation
-                                        )
-                                    )
-                                    is AudioLayer -> layer // Audio doesn't transform visually
-                                    is ImageLayer -> layer.copy(
-                                        transform = currentTransform.copy(
-                                            positionX = newPosX,
-                                            positionY = newPosY,
-                                            scaleX = newScale,
-                                            scaleY = newScale,
-                                            rotation = newRotation
-                                        )
-                                    )
-                                    is TextLayer -> layer.copy(
-                                        transform = currentTransform.copy(
-                                            positionX = newPosX,
-                                            positionY = newPosY,
-                                            scaleX = newScale,
-                                            scaleY = newScale,
-                                            rotation = newRotation
-                                        )
-                                    )
+                                    is VideoLayer -> layer.copy(transform = currentTransform.copy(positionX = newPosX, positionY = newPosY, scaleX = newScale, scaleY = newScale, rotation = newRotation))
+                                    is ImageLayer -> layer.copy(transform = currentTransform.copy(positionX = newPosX, positionY = newPosY, scaleX = newScale, scaleY = newScale, rotation = newRotation))
+                                    is TextLayer -> layer.copy(transform = currentTransform.copy(positionX = newPosX, positionY = newPosY, scaleX = newScale, scaleY = newScale, rotation = newRotation))
+                                    else -> layer
                                 }
                                 viewModel.updateLayer(trackId, updatedLayer)
                             }
@@ -181,128 +170,36 @@ fun TimelineScreen(
                     modifier = Modifier.fillMaxSize()
                 )
 
-                
-                // Overlay controls
-                Row(
+                // Overlay Play/Pause
+                IconButton(
+                    onClick = { if (exoPlayer.isPlaying) exoPlayer.pause() else exoPlayer.play() },
                     modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        .align(Alignment.Center)
+                        .size(64.dp)
+                        .background(Color.Black.copy(alpha = 0.3f), CircleShape)
                 ) {
-                    IconButton(
-                        onClick = { 
-                            if (exoPlayer.isPlaying) exoPlayer.pause() else exoPlayer.play()
-                        },
-                        modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.shapes.medium)
-                    ) {
-                        Icon(
-                            if (exoPlayer.isPlaying) Icons.Default.Stop else Icons.Default.PlayArrow,
-                            contentDescription = null
-                        )
-                    }
+                    Icon(
+                        if (exoPlayer.isPlaying) Icons.Default.Stop else Icons.Default.PlayArrow,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(40.dp)
+                    )
                 }
             }
 
-            // Processing Progress
-            if (viewModel.isProcessing) {
-                LinearProgressIndicator(
-                    progress = viewModel.processingProgress?.progress ?: 0f,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Text(
-                    text = viewModel.processingProgress?.status ?: "Processing...",
-                    modifier = Modifier.padding(8.dp),
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-
-            // Timeline and Properties Area
+            // 2. Timeline Area
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(0.6f)
+                    .weight(0.45f) // Adjusted timeline area
             ) {
-                // Properties Panel (Floating or Bottom depending on selection)
-                viewModel.selectedLayer?.let { (trackId, layer) ->
-                    TransformControls(
-                        opacity = layer.opacity.getValueAt(viewModel.currentPositionMs),
-                        posX = layer.transform.positionX,
-                        posY = layer.transform.positionY,
-                        scale = layer.transform.scaleX,
-                        rotation = layer.transform.rotation,
-                        onValueChange = { property, value ->
-                            val currentTransform = layer.transform
-                            val updatedLayer = when (layer) {
-                                is VideoLayer -> {
-                                    if (property == "opacity") layer.copy(opacity = layer.opacity.copy(defaultValue = value))
-                                    else layer.copy(transform = when(property) {
-                                        "posX" -> currentTransform.copy(positionX = value)
-                                        "posY" -> currentTransform.copy(positionY = value)
-                                        "scale" -> currentTransform.copy(scaleX = value, scaleY = value)
-                                        "rotation" -> currentTransform.copy(rotation = value)
-                                        else -> currentTransform
-                                    })
-                                }
-                                is ImageLayer -> {
-                                    if (property == "opacity") layer.copy(opacity = layer.opacity.copy(defaultValue = value))
-                                    else layer.copy(transform = when(property) {
-                                        "posX" -> currentTransform.copy(positionX = value)
-                                        "posY" -> currentTransform.copy(positionY = value)
-                                        "scale" -> currentTransform.copy(scaleX = value, scaleY = value)
-                                        "rotation" -> currentTransform.copy(rotation = value)
-                                        else -> currentTransform
-                                    })
-                                }
-                                is TextLayer -> {
-                                    if (property == "opacity") layer.copy(opacity = layer.opacity.copy(defaultValue = value))
-                                    else layer.copy(transform = when(property) {
-                                        "posX" -> currentTransform.copy(positionX = value)
-                                        "posY" -> currentTransform.copy(positionY = value)
-                                        "scale" -> currentTransform.copy(scaleX = value, scaleY = value)
-                                        "rotation" -> currentTransform.copy(rotation = value)
-                                        else -> currentTransform
-                                    })
-                                }
-                                is AudioLayer -> layer
-                            }
-                            viewModel.updateLayer(trackId, updatedLayer)
-                        },
-                        onAddKeyframe = { property ->
-                            // Map property names to match ViewModel's addKeyframe
-                            val vmProperty = when(property) {
-                                "scale" -> "scaleX" // Simplified
-                                else -> property
-                            }
-                            // We need a current value to add as keyframe
-                            val value = when(property) {
-                                "opacity" -> layer.opacity.getValueAt(viewModel.currentPositionMs)
-                                "posX" -> layer.transform.positionX
-                                "posY" -> layer.transform.positionY
-                                "scale" -> layer.transform.scaleX
-                                "rotation" -> layer.transform.rotation
-                                else -> 0f
-                            }
-                            viewModel.addKeyframe(trackId, layer.id, vmProperty, value)
-                        },
-                        onReset = {
-                            val updatedLayer = when (layer) {
-                                is VideoLayer -> layer.copy(transform = Transform())
-                                is ImageLayer -> layer.copy(transform = Transform())
-                                is TextLayer -> layer.copy(transform = Transform())
-                                is AudioLayer -> layer
-                            }
-                            viewModel.updateLayer(trackId, updatedLayer)
-                        },
-                        modifier = Modifier.animateContentSize()
-                    )
-                }
-
                 MultiTrackTimeline(
                     config = viewModel.timelineConfig,
                     currentPositionMs = viewModel.currentPositionMs,
                     selectedLayerId = viewModel.selectedLayer?.second?.id,
                     onLayerSelected = { trackId, layer ->
                         viewModel.selectLayer(trackId, layer)
+                        // Don't auto-show transform, just select
                     },
                     onLayerModified = { trackId, layer ->
                         viewModel.updateLayer(trackId, layer)
@@ -310,8 +207,142 @@ fun TimelineScreen(
                     onAddTrack = { viewModel.addTrack() },
                     modifier = Modifier.weight(1f)
                 )
+
+                // 3. Bottom Tool Context Area
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .animateContentSize()
+                ) {
+                    if (viewModel.activeTool == "transform" && viewModel.selectedLayer != null) {
+                        val (trackId, layer) = viewModel.selectedLayer!!
+                        TransformControls(
+                            opacity = layer.opacity.getValueAt(viewModel.currentPositionMs),
+                            posX = layer.transform.positionX,
+                            posY = layer.transform.positionY,
+                            scale = layer.transform.scaleX,
+                            rotation = layer.transform.rotation,
+                            onValueChange = { property, value ->
+                                val currentTransform = layer.transform
+                                val updatedLayer = when (layer) {
+                                    is VideoLayer -> {
+                                        if (property == "opacity") layer.copy(opacity = layer.opacity.copy(defaultValue = value))
+                                        else layer.copy(transform = when(property) {
+                                            "posX" -> currentTransform.copy(positionX = value)
+                                            "posY" -> currentTransform.copy(positionY = value)
+                                            "scale" -> currentTransform.copy(scaleX = value, scaleY = value)
+                                            "rotation" -> currentTransform.copy(rotation = value)
+                                            else -> currentTransform
+                                        })
+                                    }
+                                    is ImageLayer -> {
+                                        if (property == "opacity") layer.copy(opacity = layer.opacity.copy(defaultValue = value))
+                                        else layer.copy(transform = when(property) {
+                                            "posX" -> currentTransform.copy(positionX = value)
+                                            "posY" -> currentTransform.copy(positionY = value)
+                                            "scale" -> currentTransform.copy(scaleX = value, scaleY = value)
+                                            "rotation" -> currentTransform.copy(rotation = value)
+                                            else -> currentTransform
+                                        })
+                                    }
+                                    is TextLayer -> {
+                                        if (property == "opacity") layer.copy(opacity = layer.opacity.copy(defaultValue = value))
+                                        else layer.copy(transform = when(property) {
+                                            "posX" -> currentTransform.copy(positionX = value)
+                                            "posY" -> currentTransform.copy(positionY = value)
+                                            "scale" -> currentTransform.copy(scaleX = value, scaleY = value)
+                                            "rotation" -> currentTransform.copy(rotation = value)
+                                            else -> currentTransform
+                                        })
+                                    }
+                                    is AudioLayer -> layer
+                                }
+                                viewModel.updateLayer(trackId, updatedLayer)
+                            },
+                            onAddKeyframe = { property ->
+                                val vmProperty = if (property == "scale") "scaleX" else property
+                                val value = when(property) {
+                                    "opacity" -> layer.opacity.getValueAt(viewModel.currentPositionMs)
+                                    "posX" -> layer.transform.positionX
+                                    "posY" -> layer.transform.positionY
+                                    "scale" -> layer.transform.scaleX
+                                    "rotation" -> layer.transform.rotation
+                                    else -> 0f
+                                }
+                                viewModel.addKeyframe(trackId, layer.id, vmProperty, value)
+                            },
+                            onReset = {
+                                val updatedLayer = when (layer) {
+                                    is VideoLayer -> layer.copy(transform = Transform())
+                                    is ImageLayer -> layer.copy(transform = Transform())
+                                    is TextLayer -> layer.copy(transform = Transform())
+                                    else -> layer
+                                }
+                                viewModel.updateLayer(trackId, updatedLayer)
+                            }
+                        )
+                    } else if (viewModel.selectedLayer != null) {
+                        // Bottom Tool Bar (Horizontal Menu)
+                        ToolSelectionBar(
+                            activeTool = viewModel.activeTool,
+                            onToolSelected = { viewModel.setActiveTool(if (viewModel.activeTool == it) null else it) }
+                        )
+                    }
+                }
             }
         }
+    }
+}
+
+@Composable
+fun ToolSelectionBar(
+    activeTool: String?,
+    onToolSelected: (String) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(24.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Spacer(Modifier.width(16.dp))
+        ToolItem(name = "Trim", icon = Icons.Default.ContentCut, isSelected = activeTool == "trim") { onToolSelected("trim") }
+        ToolItem(name = "Split", icon = Icons.AutoMirrored.Filled.CallSplit, isSelected = activeTool == "split") { onToolSelected("split") }
+        ToolItem(name = "Transform", icon = Icons.Default.Transform, isSelected = activeTool == "transform") { onToolSelected("transform") }
+        ToolItem(name = "Filters", icon = Icons.Default.Tune, isSelected = activeTool == "filters") { onToolSelected("filters") }
+        ToolItem(name = "Volume", icon = Icons.Default.VolumeUp, isSelected = activeTool == "volume") { onToolSelected("volume") }
+        ToolItem(name = "Delete", icon = Icons.Default.Delete, isSelected = activeTool == "delete") { onToolSelected("delete") }
+        Spacer(Modifier.width(16.dp))
+    }
+}
+
+@Composable
+fun ToolItem(
+    name: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .clickable(onClick = onClick)
+            .padding(4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = name,
+            tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(24.dp)
+        )
+        Text(
+            text = name,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 

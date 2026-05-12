@@ -115,13 +115,17 @@ class MediaDataSource(private val contentResolver: ContentResolver) {
             val albumCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
 
             while (cursor.moveToNext()) {
+                val name = cursor.getString(nameCol)
+                // Filter out call recordings
+                if (name.contains("Call recording", ignoreCase = true)) continue
+                
                 val id = cursor.getLong(idCol)
                 val contentUri = ContentUris.withAppendedId(uri, id)
                 audios.add(
                     AudioItem(
                         id,
                         contentUri,
-                        cursor.getString(nameCol),
+                        name,
                         cursor.getLong(sizeCol),
                         cursor.getLong(dateCol),
                         cursor.getLong(durationCol),
